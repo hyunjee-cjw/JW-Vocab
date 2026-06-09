@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>단어장 앱</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;min-height:100vh;color:#1a1a1a}
+.app{max-width:500px;margin:0 auto;padding:16px}
+.mode-bar{display:flex;gap:4px;background:#e8e8e8;border-radius:12px;padding:4px;margin-bottom:20px}
+.mode-btn{flex:1;padding:10px;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;background:transparent;color:#666;transition:all .15s}
+.mode-btn.active{background:#fff;color:#1a1a1a;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.page{display:none}
+.page.active{display:block}
+.card{background:#fff;border-radius:12px;border:1px solid #e5e5e5;padding:16px;margin-bottom:12px}
+h2{font-size:18px;font-weight:700;margin-bottom:4px}
+h3{font-size:15px;font-weight:600;margin-bottom:10px}
+.sub{font-size:13px;color:#888;margin-bottom:16px}
+.section-title{font-size:11px;color:#999;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:6px;font-weight:600}
+.b-blue{background:#dbeafe;color:#1d4ed8}
+.b-green{background:#dcfce7;color:#15803d}
+.b-red{background:#fee2e2;color:#b91c1c}
+.b-amber{background:#fef3c7;color:#92400e}
+.b-gray{background:#f3f4f6;color:#4b5563}
+input[type=text],input[type=password]{width:100%;border:1px solid #e5e5e5;border-radius:8px;padding:10px 12px;font-size:14px;font-family:inherit;background:#fafafa;outline:none;transition:border .15s}
+input[type=text]:focus,input[type=password]:focus{border-color:#60a5fa;background:#fff}
+.row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border-radius:8px;border:1px solid #e5e5e5;background:#fff;cursor:pointer;font-size:13px;font-weight:500;font-family:inherit;color:#1a1a1a;transition:all .15s;white-space:nowrap}
+.btn:hover{background:#f5f5f5}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.btn-primary:hover{background:#333;color:#fff}
+.btn-danger{border-color:#fca5a5;color:#b91c1c}
+.btn-danger:hover{background:#fee2e2}
+.btn-full{width:100%;margin-top:8px}
+.btn-green{background:#15803d;color:#fff;border-color:#15803d}
+.btn-green:hover{background:#166534;color:#fff}
+.word-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f3f4f6}
+.word-item:last-child{border-bottom:none}
+.word-eng{font-size:15px;font-weight:600;min-width:130px;flex-shrink:0}
+.kor-inp{flex:1;border:none;border-bottom:1px solid #e5e5e5;background:transparent;font-size:14px;padding:2px 4px;outline:none;font-family:inherit}
+.kor-inp:focus{border-color:#60a5fa}
+.spin{text-align:center;padding:20px;color:#888;font-size:13px;display:none}
+.spin.show{display:block}
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.stat{background:#f9fafb;border-radius:8px;padding:12px}
+.stat-n{font-size:26px;font-weight:700}
+.stat-l{font-size:12px;color:#888;margin-top:2px}
+.result-item{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:14px;margin-bottom:10px}
+.result-item.ok{border-color:#86efac;background:#f0fdf4}
+.result-item.ng{border-color:#fca5a5;background:#fff5f5}
+.example-box{font-size:13px;color:#555;border-left:3px solid #e5e5e5;padding-left:10px;margin-top:8px;line-height:1.6}
+.steps{display:flex;gap:4px;margin-bottom:16px}
+.step{flex:1;height:3px;border-radius:2px;background:#e5e5e5}
+.step.done{background:#60a5fa}
+.step.active{background:#1d4ed8}
+.session-card{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer;transition:border .15s}
+.session-card:hover{border-color:#60a5fa}
+.info-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px;margin-bottom:12px;font-size:13px;color:#1d4ed8;line-height:1.6}
+.warn-box{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px;margin-bottom:12px;font-size:13px;color:#92400e;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="app">
+  <div style="text-align:center;margin-bottom:16px">
+    <span style="font-size:22px">📚</span>
+    <span style="font-size:17px;font-weight:700;margin-left:6px">단어장 앱</span>
+  </div>
+
+  <div class="mode-bar">
+    <button class="mode-btn active" onclick="setMode('mom')">👩‍💻 엄마 모드</button>
+    <button class="mode-btn" onclick="setMode('kid')">👧 아이 모드</button>
+  </div>
+
+  <!-- ===== 엄마 모드 ===== -->
+  <div id="mom" class="page active">
+
+    <!-- 엄마 로그인 -->
+    <div id="mom-login" class="page active">
+      <div class="card">
+        <h3>엄마 로그인</h3>
+        <p class="sub" style="margin-bottom:12px">단어 관리 및 결과 확인</p>
+        <input type="password" id="mom-pw" placeholder="비밀번호 입력" style="margin-bottom:8px" onkeydown="if(event.key==='Enter')momLogin()"/>
+        <button class="btn btn-primary btn-full" onclick="momLogin()">로그인</button>
+        <p id="mom-login-err" style="color:#b91c1c;font-size:12px;margin-top:6px;display:none">비밀번호가 틀렸어요</p>
+        <p style="font-size:12px;color:#aaa;margin-top:10px">※ 첫 사용 시 아무 비밀번호나 입력하면 설정돼요</p>
+      </div>
+    </div>
+
+    <!-- 엄마 메인 -->
+    <div id="mom-main" class="page">
+
+      <!-- 단어 추가 화면 -->
+      <div id="mom-add" class="page active">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div><h2>단어 관리</h2><p class="sub" style="margin-bottom:0">단어를 추가하고 아이에게 전송</p></div>
+          <button class="btn" style="padding:6px 10px;font-size:12px" onclick="momLogout()">로그아웃</button>
+        </div>
+
+        <div class="card">
+          <p class="section-title">단원 이름</p>
+          <input type="text" id="unit-name" placeholder="예: Unit 78 (93~95쪽)"/>
+        </div>
+
+        <div class="card">
+          <p class="section-title">단어 목록</p>
+          <div id="mom-word-list"><p style="color:#aaa;font-size:13px;padding:8px 0;text-align:center">단어를 추가해주세요</p></div>
+          <div class="row" style="margin-top:10px">
+            <input type="text" id="add-word" placeholder="단어 입력 후 Enter (쉼표로 여러개)" style="flex:1" onkeydown="if(event.key==='Enter')addWord()"/>
+            <button class="btn" onclick="addWord()">추가</button>
+          </div>
+        </div>
+
+        <button class="btn btn-green btn-full" onclick="saveSession()">💾 저장 → 아이에게 전송</button>
+        <div class="spin" id="sp-save">저장 중...</div>
+
+        <div style="margin-top:24px">
+          <p class="section-title">저장된 회차</p>
+          <div id="session-list"></div>
+        </div>
+      </div>
+
+      <!-- 결과 화면 -->
+      <div id="mom-result" class="page">
+        <button class="btn" onclick="showPage('mom-add')" style="margin-bottom:16px">← 목록으로</button>
+        <h2 id="result-title">결과 확인</h2>
+        <p class="sub" id="result-sub"></p>
+        <div class="stat-row" id="mom-stats"></div>
+        <div id="mom-result-list"></div>
+        <button class="btn btn-green btn-full" onclick="doExport()">📥 엑셀 다운로드</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== 아이 모드 ===== -->
+  <div id="kid" class="page">
+
+    <!-- 아이 회차 선택 -->
+    <div id="kid-home" class="page active">
+      <h2>단어 숙제</h2>
+      <p class="sub">엄마가 준비한 단어예요</p>
+      <div class="spin show" id="sp-kid-load">불러오는 중...</div>
+      <div id="kid-session-list"></div>
+    </div>
+
+    <!-- 뜻 채우기 -->
+    <div id="kid-fill" class="page">
+      <div class="steps"><div class="step active"></div><div class="step"></div><div class="step"></div></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <h2 id="kid-unit-title">단어 채우기</h2>
+        <span class="badge b-blue" id="kid-count"></span>
+      </div>
+      <p class="sub">아는 단어는 뜻을 써보세요. 모르면 빈칸으로 둬도 돼요.</p>
+      <div id="kid-fill-list"></div>
+      <button class="btn btn-primary btn-full" onclick="kidGrade()">채점하기</button>
+      <div class="spin" id="sp-grade">AI가 채점 중...</div>
+    </div>
+
+    <!-- 채점 결과 -->
+    <div id="kid-grade" class="page">
+      <div class="steps"><div class="step done"></div><div class="step active"></div><div class="step"></div></div>
+      <h2>채점 결과</h2>
+      <p class="sub">맞고 틀린 걸 확인해보세요</p>
+      <div class="stat-row" id="kid-grade-stats"></div>
+      <div id="kid-grade-list"></div>
+      <button class="btn btn-primary btn-full" onclick="kidWordbook()">단어장 만들기 →</button>
+    </div>
+
+    <!-- 단어장 -->
+    <div id="kid-wb" class="page">
+      <div class="steps"><div class="step done"></div><div class="step done"></div><div class="step active"></div></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <h2>틀린 단어장</h2>
+        <span class="badge b-red" id="kid-wrong-count"></span>
+      </div>
+      <div class="spin" id="sp-wb">AI가 예문 만드는 중...</div>
+      <div id="kid-wb-list"></div>
+      <div id="kid-perfect" style="display:none" class="card" style="text-align:center;padding:24px">
+        <div style="font-size:36px;margin-bottom:8px">🎉</div>
+        <p style="font-weight:700;font-size:16px">모든 단어를 맞혔어요!</p>
+        <p style="font-size:13px;color:#888;margin-top:6px">정말 잘했어요</p>
+      </div>
+      <div class="info-box" style="margin-top:12px">✅ 결과가 저장됐어요. 엄마가 엑셀로 출력할 수 있어요.</div>
+      <button class="btn btn-full" onclick="showPage('kid-home');loadKidSessions()" style="margin-top:4px">← 숙제 목록으로</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'vocab_app_data';
+const MOM_PW_KEY = 'vocab_mom_pw';
+
+let momWords = [];
+let kidWords = [];
+let kidWrongData = [];
+let currentSessionId = null;
+let currentResultData = null;
+
+function getData() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"sessions":[]}'); }
+  catch(e) { return {sessions:[]}; }
+}
+function saveData(d) { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }
+
+// ===== 모드 전환 =====
+function setMode(mode) {
+  document.querySelectorAll('.mode-btn').forEach((b,i)=>b.classList.toggle('active',(i===0&&mode==='mom')||(i===1&&mode==='kid')));
+  document.getElementById('mom').classList.toggle('active', mode==='mom');
+  document.getElementById('kid').classList.toggle('active', mode==='kid');
+  if(mode==='kid') { showPage('kid-home'); loadKidSessions(); }
+  if(mode==='mom') {
+    const pw = localStorage.getItem(MOM_PW_KEY);
+    if(pw) { showPage('mom-main'); showPage('mom-add'); loadSessions(); }
+    else showPage('mom-login');
+  }
+}
+
+function showPage(id) {
+  const el = document.getElementById(id);
+  if(!el) return;
+  const parent = el.parentElement;
+  parent.querySelectorAll(':scope > .page').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ===== 엄마 로그인 =====
+function momLogin() {
+  const pw = document.getElementById('mom-pw').value;
+  if(!pw) return;
+  const saved = localStorage.getItem(MOM_PW_KEY);
+  if(!saved) { localStorage.setItem(MOM_PW_KEY, pw); }
+  else if(saved !== pw) { document.getElementById('mom-login-err').style.display='block'; return; }
+  document.getElementById('mom-login-err').style.display='none';
+  document.getElementById('mom-pw').value='';
+  showPage('mom-main'); showPage('mom-add'); loadSessions();
+}
+function momLogout() { showPage('mom-login'); }
+
+// ===== 단어 관리 =====
+function renderMomWords() {
+  const el = document.getElementById('mom-word-list');
+  if(!momWords.length) { el.innerHTML='<p style="color:#aaa;font-size:13px;padding:8px 0;text-align:center">단어를 추가해주세요</p>'; return; }
+  el.innerHTML = momWords.map((w,i)=>`
+    <div class="word-item">
+      <span class="word-eng">${w}</span>
+      <button class="btn btn-danger" style="padding:4px 10px;font-size:12px" onclick="removeWord(${i})">삭제</button>
+    </div>`).join('');
+}
+
+function addWord() {
+  const inp = document.getElementById('add-word');
+  const v = inp.value.trim(); if(!v) return;
+  v.split(/[\s,]+/).forEach(w=>{ if(w && !momWords.find(x=>x.toLowerCase()===w.toLowerCase())) momWords.push(w); });
+  inp.value=''; renderMomWords();
+}
+function removeWord(i) { momWords.splice(i,1); renderMomWords(); }
+
+function saveSession() {
+  const unitName = document.getElementById('unit-name').value.trim();
+  if(!unitName) { alert('단원 이름을 입력해주세요'); return; }
+  if(!momWords.length) { alert('단어를 추가해주세요'); return; }
+  const sp = document.getElementById('sp-save');
+  sp.classList.add('show');
+  const d = getData();
+  const session = {
+    id: 'session_' + Date.now(),
+    unit: unitName,
+    words: [...momWords],
+    createdAt: new Date().toLocaleDateString('ko-KR'),
+    status: 'pending',
+    result: null
+  };
+  d.sessions.unshift(session);
+  saveData(d);
+  momWords = [];
+  document.getElementById('unit-name').value = '';
+  renderMomWords();
+  loadSessions();
+  sp.classList.remove('show');
+  alert(`"${unitName}" 저장 완료!\n아이 모드에서 확인할 수 있어요.`);
+}
+
+function loadSessions() {
+  const d = getData();
+  const el = document.getElementById('session-list');
+  if(!d.sessions.length) { el.innerHTML='<p style="color:#aaa;font-size:13px">아직 저장된 회차가 없어요.</p>'; return; }
+  el.innerHTML = d.sessions.map(s=>`
+    <div class="session-card">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-weight:600;font-size:14px">${s.unit}</span>
+        <span class="badge ${s.status==='done'?'b-green':'b-amber'}">${s.status==='done'?'완료':'대기중'}</span>
+      </div>
+      <div style="font-size:12px;color:#aaa;margin-top:3px">${s.words.length}개 단어 · ${s.createdAt}</div>
+      <div style="display:flex;gap:6px;margin-top:10px">
+        ${s.status==='done' ? `<button class="btn btn-primary" style="padding:6px 12px;font-size:12px" onclick="viewResult('${s.id}')">결과 보기</button>` : ''}
+        <button class="btn btn-danger" style="padding:6px 12px;font-size:12px" onclick="deleteSession('${s.id}')">삭제</button>
+      </div>
+    </div>`).join('');
+}
+
+function deleteSession(id) {
+  if(!confirm('삭제할까요?')) return;
+  const d = getData();
+  d.sessions = d.sessions.filter(s=>s.id!==id);
+  saveData(d); loadSessions();
+}
+
+function viewResult(sessionId) {
+  const d = getData();
+  const session = d.sessions.find(s=>s.id===sessionId);
+  if(!session||!session.result) return;
+  currentSessionId = sessionId;
+  currentResultData = session.result.wrongData;
+  const correct = session.words.length - session.result.wrong.length;
+  document.getElementById('result-title').textContent = session.unit;
+  document.getElementById('result-sub').textContent = `총 ${session.words.length}개 · 맞음 ${correct}개 · 틀림 ${session.result.wrong.length}개`;
+  document.getElementById('mom-stats').innerHTML=`
+    <div class="stat"><div class="stat-n" style="color:#15803d">${correct}</div><div class="stat-l">맞은 단어</div></div>
+    <div class="stat"><div class="stat-n" style="color:#b91c1c">${session.result.wrong.length}</div><div class="stat-l">틀린 단어</div></div>`;
+  document.getElementById('mom-result-list').innerHTML = session.result.wrongData.map(item=>`
+    <div class="result-item">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+        <span style="font-size:15px;font-weight:600">${item.word}</span>
+        <span class="badge b-blue">${item.pos}</span>
+      </div>
+      <div style="font-size:14px;margin-bottom:6px">${item.kor}</div>
+      <div class="example-box">${item.example_en}<br><span style="color:#999">${item.example_ko}</span></div>
+    </div>`).join('');
+  showPage('mom-result');
+}
+
+function doExport() {
+  if(!currentResultData||!currentResultData.length) { alert('내보낼 데이터가 없어요'); return; }
+  const d = getData();
+  const session = d.sessions.find(s=>s.id===currentSessionId);
+  const unitName = session ? session.unit : '단어장';
+  const ws_data = [
+    ['단어', '품사', '뜻', '예문 (영어)', '예문 (한국어)'],
+    ...currentResultData.map(r=>[r.word, r.pos, r.kor, r.example_en, r.example_ko])
+  ];
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(ws_data);
+  ws['!cols'] = [{wch:16},{wch:8},{wch:18},{wch:36},{wch:30}];
+  const headerStyle = {font:{bold:true,sz:12},fill:{fgColor:{rgb:'1a1a2e'}},alignment:{horizontal:'center'}};
+  ['A1','B1','C1','D1','E1'].forEach(cell=>{ if(ws[cell]) ws[cell].s = headerStyle; });
+  XLSX.utils.book_append_sheet(wb, ws, unitName.slice(0,31));
+  XLSX.writeFile(wb, `단어장_${unitName}_${new Date().toLocaleDateString('ko-KR').replace(/\./g,'').replace(/ /g,'')}.xlsx`);
+}
+
+// ===== 아이 모드 =====
+function loadKidSessions() {
+  const sp = document.getElementById('sp-kid-load');
+  sp.classList.add('show');
+  const d = getData();
+  sp.classList.remove('show');
+  const el = document.getElementById('kid-session-list');
+  if(!d.sessions.length) { el.innerHTML='<div class="warn-box">엄마가 아직 단어를 준비하지 않았어요. 조금만 기다려요!</div>'; return; }
+  el.innerHTML = d.sessions.map(s=>`
+    <div class="session-card" onclick="startKid('${s.id}')">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-weight:600;font-size:15px">${s.unit}</span>
+        <span class="badge ${s.status==='done'?'b-gray':'b-blue'}">${s.status==='done'?'완료 ✓':'새 숙제'}</span>
+      </div>
+      <div style="font-size:13px;color:#aaa;margin-top:4px">${s.words.length}개 단어 · ${s.createdAt}</div>
+    </div>`).join('');
+}
+
+function startKid(sessionId) {
+  const d = getData();
+  const session = d.sessions.find(s=>s.id===sessionId);
+  if(!session) return;
+  currentSessionId = sessionId;
+  kidWords = session.words.map(w=>({eng:w, kor:'', grade:null, correctMeaning:''}));
+  document.getElementById('kid-unit-title').textContent = session.unit;
+  document.getElementById('kid-count').textContent = kidWords.length+'개';
+  renderKidFill();
+  showPage('kid-fill');
+}
+
+function renderKidFill() {
+  document.getElementById('kid-fill-list').innerHTML = kidWords.map((w,i)=>`
+    <div class="card" style="padding:12px 14px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:15px;font-weight:600;min-width:130px;flex-shrink:0">${w.eng}</span>
+        <input class="kor-inp" value="${w.kor}" placeholder="한국어 뜻..." oninput="kidWords[${i}].kor=this.value"/>
+      </div>
+    </div>`).join('');
+}
+
+async function kidGrade() {
+  const sp = document.getElementById('sp-grade');
+  const btn = document.querySelector('#kid-fill .btn-primary');
+  sp.classList.add('show'); btn.disabled=true;
+  try {
+    const payload = kidWords.map(e=>({word:e.eng, answer:e.kor.trim()}));
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:1500,
+        messages:[{role:'user', content:`초등 4~6학년 영어 단어 채점. 유사어·부분정답도 correct. JSON 배열만(다른 텍스트 없이):
+[{"word":"...","result":"correct" or "wrong","meaning":"정확한 한국어 뜻(2~4단어)"}]
+입력: ${JSON.stringify(payload)}`}]
+      })
+    });
+    const d = await res.json();
+    const txt = d.content.map(b=>b.text||'').join('');
+    const clean = txt.replace(/```json|```/g,'').trim();
+    const s=clean.indexOf('['),e=clean.lastIndexOf(']');
+    const grades = JSON.parse(clean.slice(s,e+1));
+    grades.forEach(g=>{ const entry=kidWords.find(w=>w.eng===g.word); if(entry){entry.grade=g.result;entry.correctMeaning=g.meaning||'';} });
+    kidWords.forEach(w=>{ if(!w.grade) w.grade='wrong'; });
+    showKidGrade();
+  } catch(err) { alert('채점 중 오류가 발생했어요. 인터넷 연결을 확인해주세요.'); }
+  sp.classList.remove('show'); btn.disabled=false;
+}
+
+function showKidGrade() {
+  const correct = kidWords.filter(w=>w.grade==='correct').length;
+  const wrong = kidWords.filter(w=>w.grade==='wrong').length;
+  document.getElementById('kid-grade-stats').innerHTML=`
+    <div class="stat"><div class="stat-n" style="color:#15803d">${correct}</div><div class="stat-l">맞은 단어 ✓</div></div>
+    <div class="stat"><div class="stat-n" style="color:#b91c1c">${wrong}</div><div class="stat-l">틀린 단어 ✗</div></div>`;
+  document.getElementById('kid-grade-list').innerHTML = kidWords.map(w=>{
+    const ok=w.grade==='correct';
+    return `<div class="result-item ${ok?'ok':'ng'}">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px;flex-shrink:0">${ok?'✓':'✗'}</span>
+        <div style="flex:1">
+          <span style="font-size:15px;font-weight:600">${w.eng}</span>
+          ${ok
+            ? `<div style="font-size:13px;color:#15803d;margin-top:2px">${w.kor}</div>`
+            : `<div style="display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap">
+                ${w.kor ? `<span style="font-size:13px;color:#aaa;text-decoration:line-through">${w.kor}</span><span style="color:#ccc;font-size:12px">→</span>` : `<span style="font-size:12px;color:#aaa">(미기입) →</span>`}
+                <span style="font-size:13px;color:#b91c1c;font-weight:600">${w.correctMeaning}</span>
+              </div>`}
+        </div>
+      </div>
+    </div>`}).join('');
+  showPage('kid-grade');
+}
+
+async function kidWordbook() {
+  const wrong = kidWords.filter(w=>w.grade==='wrong');
+  document.getElementById('kid-wrong-count').textContent = wrong.length+'개';
+  showPage('kid-wb');
+  if(!wrong.length) {
+    document.getElementById('kid-perfect').style.display='block';
+    saveKidResult([]);
+    return;
+  }
+  const sp = document.getElementById('sp-wb');
+  sp.classList.add('show');
+  try {
+    const wlist = wrong.map(w=>w.eng).join(', ');
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:2000,
+        messages:[{role:'user', content:`초등 4~6학년 영어 학습자용 단어장. JSON 배열만(다른 텍스트 없이):
+[{"word":"...","pos":"품사(한국어)","kor":"뜻(간결히)","example_en":"짧은 예문","example_ko":"예문 해석"}]
+단어: ${wlist}`}]
+      })
+    });
+    const d = await res.json();
+    const txt = d.content.map(b=>b.text||'').join('');
+    const clean = txt.replace(/```json|```/g,'').trim();
+    const s=clean.indexOf('['),e=clean.lastIndexOf(']');
+    kidWrongData = JSON.parse(clean.slice(s,e+1));
+    document.getElementById('kid-wb-list').innerHTML = kidWrongData.map(item=>`
+      <div class="result-item">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+          <span style="font-size:16px;font-weight:600">${item.word}</span>
+          <span class="badge b-blue">${item.pos}</span>
+        </div>
+        <div style="font-size:14px;margin-bottom:6px">${item.kor}</div>
+        <div class="example-box">${item.example_en}<br><span style="color:#999">${item.example_ko}</span></div>
+      </div>`).join('');
+    saveKidResult(kidWrongData);
+  } catch(e) {
+    document.getElementById('kid-wb-list').innerHTML='<p style="color:#aaa;text-align:center;padding:16px">오류가 발생했어요. 인터넷 연결을 확인해주세요.</p>';
+  }
+  sp.classList.remove('show');
+}
+
+function saveKidResult(wrongData) {
+  const d = getData();
+  const idx = d.sessions.findIndex(s=>s.id===currentSessionId);
+  if(idx>=0) {
+    d.sessions[idx].status = 'done';
+    d.sessions[idx].result = {
+      wrong: kidWords.filter(w=>w.grade==='wrong').map(w=>w.eng),
+      wrongData
+    };
+    saveData(d);
+  }
+}
+
+// 초기 로드
+window.addEventListener('load', ()=>{
+  const pw = localStorage.getItem(MOM_PW_KEY);
+  if(!pw) showPage('mom-login');
+  else { showPage('mom-main'); showPage('mom-add'); loadSessions(); }
+  renderMomWords();
+});
+</script>
+</body>
+</html>
