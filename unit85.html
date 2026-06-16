@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 85 — Coal</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f5f0; min-height: 100vh; padding: 1.5rem 1rem; }
+.wrap { max-width: 560px; margin: 0 auto; }
+.back { font-size: 14px; color: #1D9E75; cursor: pointer; margin-bottom: 1rem; display: inline-block; }
+.unit-label { font-size: 13px; color: #888; margin-bottom: 4px; }
+.title { font-size: 22px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; }
+.subtitle { font-size: 13px; color: #aaa; margin-bottom: 1rem; }
+.word-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #eee; }
+.word-en { font-size: 15px; font-weight: 600; color: #1a1a1a; width: 150px; flex-shrink: 0; padding-top: 8px; }
+.word-col { flex: 1; display: flex; flex-direction: column; }
+.word-input { font-size: 15px; padding: 8px 12px; border: 1.5px solid #ddd; border-radius: 10px; background: white; color: #1a1a1a; outline: none; width: 100%; }
+.word-input:focus { border-color: #1D9E75; }
+.word-input.correct { background: #e1f5ee; border-color: #0F6E56; color: #085041; }
+.word-input.wrong { background: #fcebeb; border-color: #A32D2D; color: #501313; }
+.correct-ans { font-size: 12px; color: #A32D2D; margin-top: 4px; }
+.btn { width: 100%; padding: 13px; border-radius: 12px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+.btn-primary { background: #1D9E75; color: white; }
+.btn-secondary { background: white; color: #555; border: 1.5px solid #ddd; margin-top: 8px; }
+.result-box { background: white; border-radius: 14px; padding: 1.25rem; margin-bottom: 1rem; display: none; }
+.score-big { font-size: 40px; font-weight: 700; color: #1D9E75; }
+.score-sub { font-size: 14px; color: #888; margin-top: 4px; }
+.loading { text-align: center; padding: 1.5rem; color: #888; font-size: 14px; display: none; }
+.section-title { font-size: 16px; font-weight: 700; color: #1a1a1a; margin: 1.5rem 0 1rem; }
+.wb-card { background: white; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 10px; border-left: 4px solid #A32D2D; }
+.wb-en { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+.wb-pos { font-size: 12px; color: #888; margin-left: 6px; }
+.wb-ko { font-size: 15px; color: #333; margin-top: 4px; }
+.wb-row { font-size: 13px; color: #666; margin-top: 6px; line-height: 1.6; }
+.wb-label { font-weight: 600; color: #555; }
+.wb-ex { font-style: italic; }
+.quiz-card { background: white; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 10px; }
+.quiz-q { font-size: 15px; color: #1a1a1a; margin-bottom: 10px; font-weight: 500; }
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-opt { padding: 10px 14px; border: 1.5px solid #ddd; border-radius: 10px; font-size: 14px; cursor: pointer; background: white; text-align: left; }
+.quiz-opt.selected { border-color: #1D9E75; background: #e1f5ee; }
+.quiz-opt.correct-opt { border-color: #0F6E56; background: #e1f5ee; color: #085041; font-weight: 600; }
+.quiz-opt.wrong-opt { border-color: #A32D2D; background: #fcebeb; color: #501313; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="back" onclick="location.href='index.html'">← 목록으로</div>
+  <div class="unit-label">Multiple Reading Skills E</div>
+  <div class="title">Unit 85 — Coal</div>
+
+  <!-- 1단계: 단어 퀴즈 -->
+  <div id="step1">
+    <div class="subtitle">아는 단어는 뜻을 써보세요. 모르면 빈칸으로 둬도 돼요.</div>
+    <div id="quiz-area">
+      <div class="word-row"><div class="word-en">buried</div><div class="word-col"><input class="word-input" placeholder="한국어 뜻..." data-answer="묻힌, 파묻힌"></div></div>
+      <div class="word-row"><div class="word-en">sunshine</div><div class="word-col"><input class="word-input" placeholder="한국어 뜻..." data-answer="햇빛, 햇살"></div></div>
+      <div class="word-row"><div class="word-en">formed</div><div class="word-col"><input class="word-input" placeholder="한국어 뜻..." data-answer="형성된, 만들어진"></div></div>
+      <div class="word-row"><div class="word-en">valuable</div><div class="word-col"><input class="word-input" placeholder="한국어 뜻..." data-answer="가치 있는, 귀중한"></div></div>
+      <div class="word-row"><div class="word-en">fingernail</div><div class="word-col"><input class="word-input" placeholder="한국어 뜻..." data-answer="손톱"></div></div>
+      <div class="word-row"><div class="word-en">polish</div><div class="word-col"><input class="word-input" placeholder="한국어 뜻..." data-answer="광택제, 닦다"></div></div>
+      <div class="word-row"><div class="word-en">aspirin</div><div class="word-col"><input class="word-input" placeholder="한국어 뜻..." data-answer="아스피린"></div></div>
+      <div class="word-row"><div class="word-en">lipsticks</div><div class="word-col"><input class="word-input" placeholder="한국어 뜻..." data-answer="립스틱"></div></div>
+      <div class="word-row"><div class="word-en">plastics</div><div class="word-col"><input class="word-input" placeholder="한국어 뜻..." data-answer="플라스틱"></div></div>
+      <div class="word-row"><div class="word-en">recordings</div><div class="word-col"><input class="word-input" placeholder="한국어 뜻..." data-answer="녹음물, 레코드"></div></div>
+      <div class="word-row"><div class="word-en">purpose</div><div class="word-col"><input class="word-input" placeholder="한국어 뜻..." data-answer="목적, 용도"></div></div>
+      <div class="word-row"><div class="word-en">mined</div><div class="word-col"><input class="word-input" placeholder="한국어 뜻..." data-answer="채굴된"></div></div>
+      <div class="word-row"><div class="word-en">digging</div><div class="word-col"><input class="word-input" placeholder="한국어 뜻..." data-answer="파는, 굴착"></div></div>
+      <div class="word-row"><div class="word-en">surface</div><div class="word-col"><input class="word-input" placeholder="한국어 뜻..." data-answer="표면, 지표면"></div></div>
+      <div class="word-row"><div class="word-en">necessary</div><div class="word-col"><input class="word-input" placeholder="한국어 뜻..." data-answer="필요한, 필수적인"></div></div>
+    </div>
+    <div class="loading" id="loading1">✨ AI가 채점 중이에요...</div>
+    <button class="btn btn-primary" id="grade-btn" onclick="gradeQuiz()">채점하기</button>
+  </div>
+
+  <!-- 채점 결과 -->
+  <div class="result-box" id="result-box">
+    <div class="score-big" id="score-big"></div>
+    <div class="score-sub" id="score-sub"></div>
+  </div>
+
+  <!-- 2단계: 단어장 -->
+  <div id="step2" style="display:none">
+    <div class="section-title">📖 틀린 단어장</div>
+    <div class="subtitle" style="margin-bottom:1rem">읽고 공부한 뒤 아래 어휘 문제를 풀어보세요!</div>
+    <div id="wb-cards"></div>
+    <div class="loading" id="loading2">✨ 어휘 문제 만드는 중...</div>
+    <button class="btn btn-primary" id="vocab-btn" style="display:none" onclick="showVocabQuiz()">어휘 문제 풀기</button>
+  </div>
+
+  <!-- 3단계: 어휘 문제 -->
+  <div id="step3" style="display:none">
+    <div class="section-title">🧩 어휘 문제</div>
+    <div id="vocab-questions"></div>
+    <div class="loading" id="loading3">✨ 채점 중...</div>
+    <button class="btn btn-primary" id="vocab-grade-btn" onclick="gradeVocab()">채점하기</button>
+    <div class="result-box" id="vocab-result" style="margin-top:10px">
+      <div class="score-big" id="vocab-score"></div>
+      <div class="score-sub" id="vocab-sub"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_KEY = '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';
+const CONTEXT = 'Coal is often called buried sunshine. It could also be called buried gold because its many uses make it so valuable. Coal is used to make fingernail polish, aspirin, lipsticks, plastics, and recordings of your favorite singers. It is also used for heating. Today it is still used for this purpose, especially in factories. There are two ways in which most coal is mined. One is by digging deep in the earth and bringing the coal to the surface. Another method is used when the coal is already close to the surface. Then it is only necessary to clear away the earth to reach the coal.';
+
+let wrongWords = [];
+let wordbookData = [];
+let vocabQuestions = [];
+
+async function gradeQuiz() {
+  const inputs = document.querySelectorAll('.word-input');
+  const words = [];
+  inputs.forEach(inp => words.push({ en: inp.closest('.word-row').querySelector('.word-en').textContent, answer: inp.value.trim(), correct: inp.dataset.answer }));
+
+  document.getElementById('loading1').style.display = 'block';
+  document.getElementById('grade-btn').style.display = 'none';
+
+  const prompt = `다음은 영어 단어와 초등학교 5학년 학생의 한국어 답변입니다. 비슷한 뜻이면 맞은 것으로, 빈칸은 틀린 것으로 처리하세요.
+${words.map((w,i) => `${i+1}. ${w.en} - 학생답변: "${w.answer}" (정답예시: ${w.correct})`).join('\n')}
+JSON으로만 응답: {"results": [{"en": "단어", "correct": true}]}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    const parsed = JSON.parse(data.content[0].text.replace(/```json|```/g, '').trim());
+    showQuizResults(parsed.results, words);
+  } catch(e) {
+    showQuizResults(words.map(w => ({ en: w.en, correct: w.answer !== '' })), words);
+  }
+  document.getElementById('loading1').style.display = 'none';
+}
+
+function showQuizResults(results, words) {
+  const inputs = document.querySelectorAll('.word-input');
+  let correct = 0; wrongWords = [];
+  inputs.forEach((inp, i) => {
+    inp.disabled = true;
+    if (results[i] && results[i].correct) { inp.classList.add('correct'); correct++; }
+    else {
+      inp.classList.add('wrong');
+      const d = document.createElement('div'); d.className = 'correct-ans'; d.textContent = '정답: ' + inp.dataset.answer;
+      inp.parentNode.appendChild(d);
+      wrongWords.push(words[i].en);
+    }
+  });
+  const wrong = words.length - correct;
+  document.getElementById('result-box').style.display = 'block';
+  document.getElementById('score-big').textContent = correct + ' / ' + words.length;
+  document.getElementById('score-sub').textContent = wrong > 0 ? wrong + '개 틀렸어요. 단어장을 공부해보세요!' : '완벽해요! 🎉';
+  if (wrong > 0) generateWordbook();
+  else document.getElementById('step2').style.display = 'none';
+}
+
+async function generateWordbook() {
+  document.getElementById('step2').style.display = 'block';
+  document.getElementById('loading2').style.display = 'block';
+
+  const prompt = `다음 영어 단어들에 대해 초등학교 5학년 수준의 단어장을 만들어주세요.
+지문: "${CONTEXT}"
+단어: ${wrongWords.join(', ')}
+JSON으로만 응답: {"words": [{"en": "단어", "pos": "품사(한국어)", "ko": "대표뜻 하나만", "synonym": "유의어(없으면 null)", "antonym": "반의어(없으면 null)", "example": "지문 활용 간단한 영어예문"}]}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1500, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    const parsed = JSON.parse(data.content[0].text.replace(/```json|```/g, '').trim());
+    wordbookData = parsed.words;
+    const container = document.getElementById('wb-cards');
+    parsed.words.forEach(w => {
+      const card = document.createElement('div'); card.className = 'wb-card';
+      let html = `<div><span class="wb-en">${w.en}</span><span class="wb-pos">[${w.pos}]</span></div><div class="wb-ko">뜻: ${w.ko}</div>`;
+      if (w.synonym) html += `<div class="wb-row"><span class="wb-label">유의어</span>: ${w.synonym}</div>`;
+      if (w.antonym) html += `<div class="wb-row"><span class="wb-label">반의어</span>: ${w.antonym}</div>`;
+      html += `<div class="wb-row wb-ex">예문: ${w.example}</div>`;
+      card.innerHTML = html; container.appendChild(card);
+    });
+  } catch(e) { console.error(e); }
+
+  document.getElementById('loading2').style.display = 'none';
+  document.getElementById('vocab-btn').style.display = 'block';
+}
+
+async function showVocabQuiz() {
+  document.getElementById('vocab-btn').style.display = 'none';
+  document.getElementById('step3').style.display = 'block';
+  document.getElementById('loading3').style.display = 'block';
+  document.getElementById('vocab-grade-btn').style.display = 'none';
+
+  const prompt = `다음 단어장을 바탕으로 초등학교 5학년 수준의 어휘 문제 ${wordbookData.length}개를 만들어주세요.
+단어장: ${JSON.stringify(wordbookData)}
+유의어/반의어/예문을 활용한 4지선다 문제로 만들어주세요.
+JSON으로만 응답: {"questions": [{"question": "문제", "options": ["보기1","보기2","보기3","보기4"], "answer": "정답보기"}]}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    const parsed = JSON.parse(data.content[0].text.replace(/```json|```/g, '').trim());
+    vocabQuestions = parsed.questions;
+    const container = document.getElementById('vocab-questions');
+    parsed.questions.forEach((q, i) => {
+      const card = document.createElement('div'); card.className = 'quiz-card';
+      let html = `<div class="quiz-q">${i+1}. ${q.question}</div><div class="quiz-options">`;
+      q.options.forEach(opt => { html += `<button class="quiz-opt" onclick="selectOpt(this, ${i})">${opt}</button>`; });
+      html += '</div>';
+      card.innerHTML = html; container.appendChild(card);
+    });
+  } catch(e) { console.error(e); }
+
+  document.getElementById('loading3').style.display = 'none';
+  document.getElementById('vocab-grade-btn').style.display = 'block';
+}
+
+function selectOpt(btn, qIndex) {
+  const opts = btn.closest('.quiz-options').querySelectorAll('.quiz-opt');
+  opts.forEach(o => o.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function gradeVocab() {
+  let correct = 0;
+  const cards = document.querySelectorAll('#vocab-questions .quiz-card');
+  cards.forEach((card, i) => {
+    const selected = card.querySelector('.quiz-opt.selected');
+    const opts = card.querySelectorAll('.quiz-opt');
+    opts.forEach(o => {
+      if (o.textContent === vocabQuestions[i].answer) o.classList.add('correct-opt');
+    });
+    if (selected && selected.textContent === vocabQuestions[i].answer) { correct++; }
+    else if (selected) { selected.classList.add('wrong-opt'); }
+    opts.forEach(o => o.disabled = true);
+  });
+  document.getElementById('vocab-grade-btn').style.display = 'none';
+  document.getElementById('vocab-result').style.display = 'block';
+  document.getElementById('vocab-score').textContent = correct + ' / ' + vocabQuestions.length;
+  document.getElementById('vocab-sub').textContent = correct === vocabQuestions.length ? '완벽해요! 🎉' : (vocabQuestions.length - correct) + '개 틀렸어요.';
+}
+</script>
+</body>
+</html>
